@@ -16,7 +16,7 @@ resource "aws_instance" "shareframe_pds" {
   }
 
   lifecycle {
-    ignore_changes = [instance_state]
+    ignore_changes = []
   }
 }
 

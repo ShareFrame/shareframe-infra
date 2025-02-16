@@ -99,6 +99,17 @@ resource "aws_appsync_datasource" "user_creation_lambda" {
   }
 }
 
+resource "aws_appsync_datasource" "posting_service" {
+  api_id           = var.api_id
+  name             = "ShareFrameFeedPostLambda"
+  type             = "AWS_LAMBDA"
+  service_role_arn = "arn:aws:iam::585768148590:role/service-role/appsync-ds-lam-CSbZFo4kpyes-posting-service"
+
+  lambda_config {
+    function_arn = "arn:aws:lambda:us-east-2:585768148590:function:posting-service"
+  }
+}
+
 resource "aws_appsync_resolver" "get_profile_resolver" {
   api_id            = aws_appsync_graphql_api.appsync_api.id
   type              = "Query"
@@ -150,3 +161,33 @@ resource "aws_appsync_resolver" "create_user_resolver" {
   #end
   EOF
 }
+
+resource "aws_appsync_resolver" "create_post_resolver" {
+  api_id      = aws_appsync_graphql_api.appsync_api.id
+  type        = "Mutation"
+  field       = "createPost"
+  data_source = aws_appsync_datasource.posting_service.name
+
+  request_template = <<EOF
+  {
+    "version": "2018-05-29",
+    "operation": "Invoke",
+    "payload": {
+      "authToken": "$ctx.args.input.authToken",
+      "did": "$ctx.args.input.did",
+      "post": {
+        "text": "$ctx.args.input.post.text",
+        "imageUris": $util.toJson($ctx.args.input.post.imageUris),
+        "videoUris": $util.toJson($ctx.args.input.post.videoUris),
+        "createdAt": "$ctx.args.input.post.createdAt",
+        "nsid": "$ctx.args.input.post.nsid"
+      }
+    }
+  }
+  EOF
+
+  response_template = <<EOF
+  $util.toJson($context.result)
+  EOF
+}
+

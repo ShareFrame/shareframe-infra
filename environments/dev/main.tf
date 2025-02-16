@@ -39,9 +39,30 @@ module "profile_service" {
   }
 }
 
+module "posting_service_lambda" {
+  source       = "../../modules/compute/lambda/posting-service"
+  function_name = "posting-service"
+  role_arn     = "arn:aws:iam::585768148590:role/service-role/posting-service-role-pt86r0be"
+  handler      = "main"
+  runtime      = "provided.al2023"
+  memory_size  = 128
+  timeout      = 3
+  architectures = ["x86_64"]
+  
+  s3_bucket    = "shareframe-lambda-deployments"
+  s3_key       = "posting-service/posting-service-lambda.zip"
+
+  environment_variables = {
+    ATPROTO_BASE_URL       = "https://shareframe.social"
+  }
+}
+
+
 module "appsync" {
   source = "../../modules/appsync"
+  api_id = "fy4o2rgkivem5hz4prukosgn7u" 
 }
+
 
 module "shareframe_pds" {
   source             = "../../modules/compute/ec2"
